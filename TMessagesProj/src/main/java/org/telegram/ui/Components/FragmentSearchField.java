@@ -538,4 +538,8 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
         }
         searchFilterLayout.setTag(visible ? 1 : null);
     }
+
+    public android.widget.ImageView getSearchIcon() {
+        return searchIcon;
+    }
 }

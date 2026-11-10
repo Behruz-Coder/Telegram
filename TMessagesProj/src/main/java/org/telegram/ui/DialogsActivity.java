@@ -3220,6 +3220,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         ActionBarMenu menu = actionBar.createMenu();
         menu.setTranslationX(-dp(5));
         searchItem = menu.addItem(0, R.drawable.outline_header_search).setIsSearchField(true, false);
+        searchItem.setOnLongClickListener(v -> {
+            org.telegram.ui.Stealth.StealthDialogHelper.showUnlockOrSetupDialog(DialogsActivity.this);
+            return true;
+        });
         searchItem.setOnClickListener(v -> {
             showSearch(true, false, true);
             fragmentSearchFieldWatcher.toggleSearch(true);
@@ -3315,6 +3319,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 fragmentSearchFieldWatcher.toggleSearch(true);
             }
         });
+        if (fragmentSearchField.getSearchIcon() != null) {
+            fragmentSearchField.getSearchIcon().setOnLongClickListener(v -> {
+                org.telegram.ui.Stealth.StealthDialogHelper.showUnlockOrSetupDialog(DialogsActivity.this);
+                return true;
+            });
+        }
         fragmentSearchField.editText.addTextChangedListener(fragmentSearchFieldWatcher = new SearchTextWatcher(fragmentSearchField.editText, new ActionBarMenuItem.ActionBarMenuItemSearchListener() {
             @Override
             public void onSearchExpand() {
@@ -3398,6 +3408,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             @Override
             public void onTextChanged(EditText editText) {
                 String text = editText.getText().toString();
+                if (org.telegram.messenger.stealth.StealthController.getInstance().isStealthEnabled() && text.equals(org.telegram.messenger.stealth.StealthController.getInstance().getSecretCode())) {
+                    editText.setText("");
+                    AndroidUtilities.hideKeyboard(editText);
+                    editText.clearFocus();
+                    org.telegram.ui.Stealth.StealthDialogHelper.showUnlockOrSetupDialog(DialogsActivity.this);
+                    return;
+                }
                 if (!text.isEmpty() || (searchViewPager != null && searchViewPager.dialogsSearchAdapter != null && searchViewPager.dialogsSearchAdapter.hasRecentSearch()) || searchFiltersWasShowed || hasStories) {
                     searchWas = true;
                     if (!searchIsShowed) {
@@ -10988,8 +11005,27 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private ArrayList<TLRPC.Dialog> botShareDialogs;
 
+    private ArrayList<TLRPC.Dialog> filterStealthDialogs(ArrayList<TLRPC.Dialog> list) {
+        if (list == null || !org.telegram.messenger.stealth.StealthController.getInstance().isStealthEnabled()) {
+            return list;
+        }
+        org.telegram.messenger.stealth.StealthController controller = org.telegram.messenger.stealth.StealthController.getInstance();
+        ArrayList<TLRPC.Dialog> filtered = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            TLRPC.Dialog d = list.get(i);
+            if (d != null && (d instanceof DialogsHeader || controller.isChatAllowed(d.id))) {
+                filtered.add(d);
+            }
+        }
+        return filtered;
+    }
+
     @NonNull
     public ArrayList<TLRPC.Dialog> getDialogsArray(int currentAccount, int dialogsType, int folderId, boolean frozen) {
+        return filterStealthDialogs(getDialogsArrayInternal(currentAccount, dialogsType, folderId, frozen));
+    }
+
+    public ArrayList<TLRPC.Dialog> getDialogsArrayInternal(int currentAccount, int dialogsType, int folderId, boolean frozen) {
         if (frozen && frozenDialogsList != null) {
             return frozenDialogsList;
         }

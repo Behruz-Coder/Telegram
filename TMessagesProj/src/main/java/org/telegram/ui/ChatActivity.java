@@ -2717,6 +2717,12 @@ public class ChatActivity extends BaseFragment implements
         final long chatId = arguments.getLong("chat_id", 0);
         final long userId = arguments.getLong("user_id", 0);
         final int encId = arguments.getInt("enc_id", 0);
+        long targetStealthDialogId = chatId != 0 ? -chatId : (userId != 0 ? userId : (encId != 0 ? (((long) encId) << 32) : 0));
+        if (targetStealthDialogId != 0 && org.telegram.messenger.stealth.StealthController.getInstance().isStealthEnabled()) {
+            if (!org.telegram.messenger.stealth.StealthController.getInstance().isChatAllowed(targetStealthDialogId)) {
+                return false;
+            }
+        }
         dialogFolderId = arguments.getInt("dialog_folder_id", 0);
         dialogFilterId = arguments.getInt("dialog_filter_id", 0);
         chatMode = arguments.getInt("chatMode", 0);

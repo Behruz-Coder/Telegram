@@ -283,6 +283,21 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
     }
 
     private boolean filter(Object obj) {
+        if (org.telegram.messenger.stealth.StealthController.getInstance().isStealthEnabled()) {
+            long did = 0;
+            if (obj instanceof org.telegram.tgnet.TLRPC.User) {
+                did = ((org.telegram.tgnet.TLRPC.User) obj).id;
+            } else if (obj instanceof org.telegram.tgnet.TLRPC.Chat) {
+                did = -((org.telegram.tgnet.TLRPC.Chat) obj).id;
+            } else if (obj instanceof org.telegram.tgnet.TLRPC.Dialog) {
+                did = ((org.telegram.tgnet.TLRPC.Dialog) obj).id;
+            } else if (obj instanceof org.telegram.messenger.MessageObject) {
+                did = ((org.telegram.messenger.MessageObject) obj).getDialogId();
+            }
+            if (did != 0 && !org.telegram.messenger.stealth.StealthController.getInstance().isChatAllowed(did)) {
+                return false;
+            }
+        }
         if (dialogsType != DialogsActivity.DIALOGS_TYPE_START_ATTACH_BOT) {
             return true;
         }
@@ -2360,7 +2375,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
         final int count = recentSearchObjects.size();
         for (int i = 0; i < count; ++i) {
             RecentSearchObject obj = recentSearchObjects.get(i);
-            if (obj == null || obj.object == null) {
+            if (obj == null || obj.object == null || !filter(obj.object)) {
                 continue;
             }
             if (delegate != null && delegate.getSearchForumDialogId() == obj.did || !filter(recentSearchObjects.get(i).object)) {

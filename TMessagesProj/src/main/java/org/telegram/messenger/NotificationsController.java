@@ -1074,6 +1074,15 @@ public class NotificationsController extends BaseController implements Notificat
     }
 
     public void processNewMessages(ArrayList<MessageObject> messageObjects, boolean isLast, boolean isFcm, CountDownLatch countDownLatch) {
+        if (messageObjects != null && org.telegram.messenger.stealth.StealthController.getInstance().isStealthEnabled() && org.telegram.messenger.stealth.StealthController.getInstance().isStrictNotifications()) {
+            for (int i = 0; i < messageObjects.size(); ++i) {
+                MessageObject msg = messageObjects.get(i);
+                if (msg != null && !org.telegram.messenger.stealth.StealthController.getInstance().isChatAllowed(msg.getDialogId())) {
+                    messageObjects.remove(i);
+                    i--;
+                }
+            }
+        }
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("NotificationsController: processNewMessages msgs.size()=" + (messageObjects == null ? "null" : messageObjects.size()) + " isLast=" + isLast + " isFcm=" + isFcm + ")");
         }
