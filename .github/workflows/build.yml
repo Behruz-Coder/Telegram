@@ -31,11 +31,11 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build APK (Standalone Debug)
-        run: ./gradlew assembleStandaloneDebug --stacktrace
+      - name: Build APK (Afat Debug)
+        run: ./gradlew :TMessagesProj_AppStandalone:assembleAfatDebug -Dorg.gradle.jvmargs="-Xmx5g -XX:MaxMetaspaceSize=1g" --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Telegram-Stealth-APK
-          path: TMessagesProj_AppStandalone/build/outputs/apk/standalone/debug/*.apk
+          path: TMessagesProj_AppStandalone/build/outputs/apk/**/*.apk
